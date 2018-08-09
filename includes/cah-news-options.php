@@ -36,8 +36,32 @@ function setup_cah_news_settings() {
                         'cah_news_display_dept2_section'); 
     register_setting('cah_news_display_dept2_section', 'cah_news_display_dept2'); 
 
+    add_settings_field('cah_news_set_news_page',
+                        'News Page',
+                        'cah_news_set_news_page_field',
+                        'cah_news_options',
+                        'cah_news_display_dept2_section');
+    register_setting('cah_news_display_dept2_section', 'cah_news_set_news_page'); 
+
 }
 
+function cah_news_set_news_page_field() {
+    $field_title = 'cah_news_set_news_page';
+    $value = get_option($field_title);
+    if ($value) {
+        $post = sprintf('<a href="%s">Link</a>', home_url($value)); 
+    }
+    else {
+        $post = '(unset)'; 
+        $value = 'news'; 
+    }
+    ?>
+    <input type='text', name='<?= $field_title ?>' value='<?= $value ?>'>
+    <?
+    echo $post; 
+}
+
+// DEPRECIATED
 function cah_news_display_dept_field($args) {
     $field_title = 'cah_news_display_dept';
     $value = get_option($field_title); 

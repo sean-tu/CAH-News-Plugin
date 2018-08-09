@@ -11,10 +11,27 @@
 define('CAH_NEWS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
 // Add class to prev/next page links
-add_filter('next_posts_link_attributes', 'posts_link_attributes');
-add_filter('previous_posts_link_attributes', 'posts_link_attributes');
 function posts_link_attributes() {
     return 'class="page-link"';
+}
+
+// Filter excerpt length
+function cah_news_excerpt_length($length) {
+    return 20; 
+}
+
+// Change 'Read more' string of excerpt 
+function cah_news_excerpt_more($more) {
+    return '...'; 
+}
+
+// Add filters to modify display of news posts 
+function cah_news_before() {
+    add_filter('next_posts_link_attributes', 'posts_link_attributes');
+    add_filter('previous_posts_link_attributes', 'posts_link_attributes');
+
+    add_filter('excerpt_more', 'cah_news_excerpt_more'); 
+    add_filter('excerpt_length', 'cah_news_excerpt_length'); 
 }
 
 // Register custom taxonomy to classify department origin
@@ -88,12 +105,14 @@ function query_news($deptIDs)
     return new WP_Query($args);
 }
 
-function display_news($news_query) {
-
+function display_news($news_query, $current_blog) {
+    cah_news_before(); 
     echo "<div class='ucf-news modern'>";
-    if ($news_query->have_posts()) : while ($news_query->have_posts()) : $news_query->the_post(); ?>
+    if ($news_query->have_posts()) : while ($news_query->have_posts()) : $news_query->the_post(); 
+        $post_url = esc_url(add_query_arg(array('postID' => get_the_ID()), get_home_url($current_blog, 'news-post'))); 
+    ?>
         <div class="ucf-news-item">
-        <a href="<? the_permalink(); ?>">
+        <a href="<?= $post_url ?>">
             <? if ($img = get_the_post_thumbnail_url()): ?>
                 <div class="ucf-news-thumbnail-image-cah mr-3"
                      style="background-image:url('<?= $img ?>'">

@@ -2,6 +2,7 @@
 
 add_shortcode('cah-news', 'cah_news_shortcode');
 function cah_news_shortcode($atts) {
+    $currentBlog = get_current_blog_id(); 
     $displayDept = get_option('cah_news_display_dept2');
     if (empty($displayDept)) {
         // If option not set, fall back to show news from all departments 
@@ -16,7 +17,7 @@ function cah_news_shortcode($atts) {
     ), $atts);
     
     $query = query_news($displayDept);  // switches to main blog 1 and performs query
-    display_news($query);               // displays news posts
+    display_news($query, $currentBlog);               // displays news posts
     restore_current_blog();
     cah_news_pagination($query); 
 }
