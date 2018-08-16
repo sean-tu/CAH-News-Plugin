@@ -87,10 +87,10 @@ function cah_news_related_posts($post_ID) {
     $posts = json_decode(wp_remote_retrieve_body($response)); 
 
     echo '<h4>Related Posts</h4>';
-    echo '<ul>'; 
+    echo '<ul class="list-group list-group-flush">';
     foreach($posts as $post) {
         $post_url = esc_url(add_query_arg(array('postID' => $post->id), get_home_url(null, 'news-post'))); 
-        echo sprintf('<a href="%s"><li>%s</li></a>', $post_url, $post->title->rendered); 
+        echo sprintf('<a href="%s"><li class="list-group-item list-group-item-action">%s</li></a>', $post_url, $post->title->rendered);
     }
     echo '</ul>'; 
 }
@@ -284,11 +284,58 @@ function cah_news_post($id) {
 
 // Display pagination navigation 
 function cah_news_pagination($query) {
+    $max_pages = $query->max_num_pages;
+    $current_page = max(get_query_var('paged'), 1);
+
+    $page_nums = array();
+
+    $width = 3;
+    if ($current_page > 1) {
+        $page_nums[] = 1;
+        for($i=$current_page-$width; $i<$current_page; $i++) {
+            if ($i > 1) {
+                $page_nums[] = $i;
+            }
+        }
+    }
+
+    $page_nums[] = $current_page;
+
+    if ($current_page < $max_pages) {
+        for($i=$current_page+1; $i<$current_page+$width; $i++) {
+            if ($i < $max_pages) {
+                $page_nums[] = $i;
+            }
+        }
+
+        if ($page_nums[-1] !== $max_pages) {
+            $page_nums[] = $max_pages;
+        }
+
+    }
+
     ?>
     <nav aria-label="News posts">
         <ul class="pagination pagination-lg">
-            <li class="page-item"><? previous_posts_link( '&laquo; Previous page', $query->max_num_pages) ?></li>
-            <li class="page-item"><? next_posts_link( 'Next page &raquo;', $query->max_num_pages) ?></li>
+            <li class="page-item"><? previous_posts_link( '&laquo; Previous page', $max_pages) ?></li>
+
+            <?
+            $prev = $page_nums[0];
+            foreach($page_nums as $page) {
+                // divider
+                if ($page - $prev > 1) {
+                    echo sprintf('<li class="page-item disabled"><a tabindex="-1" class="page-link disabled">...</a></li>');
+                }
+                $link = get_pagenum_link($page);
+                $active = $page == $current_page ? 'active' : '';
+                echo sprintf('<li class="page-item %s"><a href="%s" class="page-link">%s</a></li>', $active, $link, $page);
+                $prev = $page;
+            }
+            ?>
+
+
+            <li class="page-item"><? next_posts_link( 'Next page &raquo;', $max_pages) ?></li>
+
         </ul>
     </nav>
     <?
