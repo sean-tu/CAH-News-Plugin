@@ -172,4 +172,23 @@ function cah_news_options_page() {
 <?php
 }
 
+// Custom admin columns in news posts display
+add_filter('manage_news_posts_columns', 'cah_news_set_columns');
+function cah_news_set_columns($columns) {
+    $columns['department'] = 'Department';
+    return $columns;
+}
+
+add_action('manage_news_posts_custom_column', 'cah_news_custom_column', 10, 2);
+function cah_news_custom_column($column, $post_id) {
+    switch($column) {
+        case 'department':
+            $depts = get_the_term_list($post_id, 'dept', '', ',', '');
+            if (is_string($depts))
+                echo $depts;
+            else
+                break;
+    }
+}
+
 ?>

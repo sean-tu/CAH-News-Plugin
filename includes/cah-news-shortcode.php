@@ -25,15 +25,17 @@ function cah_news_shortcode($atts) {
         echo "Displaying all news."; 
         $displayDept = array_column(get_departments(), 'term_id'); 
     }
-    
+
     $current_blog = get_current_blog_id(); 
     $query = query_news($displayDept, $atts);          // switches to main blog 1 and performs query
     display_news($query, $current_blog);         // displays news posts
-    switch_to_blog($current_blog); 
+    if ($current_blog != 1) {
+        switch_to_blog($current_blog);
+    }
     // restore_current_blog();
 
     if ($atts['limit'] == -1) {
-        cah_news_pagination($query); 
+        cah_news_pagination($query);
     }
     if ($atts['view'] == 'preview') {
         $news_page = get_option('cah_news_set_news_page', 'news'); 

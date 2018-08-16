@@ -195,7 +195,8 @@ function query_news($deptIDs, $args)
     $cat = $args['cat']; 
     $paged = get_query_var('paged', 1); 
 
-    switch_to_blog(1);
+    if (get_current_blog_id() !== 1)
+        switch_to_blog(1);
     $args = array(
         'post_type' => 'news',
         'tax_query' => array(
@@ -357,8 +358,12 @@ function bulk_apply_dept_tax($deptName) {
 }
 
 // Included files 
-require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-options.php';
 require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-shortcode.php';
+
+// Included admin files
+if (is_admin()) {
+    require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-options.php';
+}
 
 
 ?>
