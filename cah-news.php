@@ -10,6 +10,20 @@
 
 define('CAH_NEWS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
+// Search function
+function cah_news_search() {
+    $search_query = isset($_GET['search']) ? esc_attr($_GET['search']) : '';
+    ?>
+    <form role="search" method="get" id="search-form" >
+        <div class="search-wrap">
+            <input type="search" placeholder="Show me news on..." name="search" id="search-input" value="<?= $search_query ?>" />
+            <input class="screen-reader-text" type="submit" id="search-submit" value="Search" />
+        </div>
+    </form>
+    <hr>
+    <?
+}
+
 // Exclude current post from query
 function cah_news_exclude_current_post($query) {
     global $post_ID; 
@@ -37,7 +51,7 @@ function cah_news_related_posts2($post_ID) {
 }
 
 // Returns a REST API query URL of news posts
-function cah_news_query($params, $embed=true) {
+function cah_news_query($params, $advanced=false, $embed=true) {
     $base_url = 'http://wordpress.cah.ucf.edu/wp-json/wp/v2/news?'; 
     $query = ''; 
     foreach($params as $key => $value) {
@@ -51,7 +65,25 @@ function cah_news_query($params, $embed=true) {
     if ($embed) {
         $query .= '_embed';
     }
-    return $base_url . $query;
+
+    $request_url = $base_url . $query;
+    $response = wp_remote_get($request_url, array('timeout'=>20));
+    if (is_wp_error($response)) {
+        echo 'Error showing news ';
+        echo $response->get_error_message();
+        return null;
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response));
+    if (!$advanced) {
+        return $body;
+    }
+    $max_pages = $response['headers']['X-WP-TotalPages'];
+    $result = array(
+            'posts' => $body,
+            'max_pages' => $max_pages,
+    );
+    return $result;
 }
 
 // Retrieve thumbnail media from post JSON
@@ -69,22 +101,12 @@ function cah_news_related_posts($post_ID) {
     $cats = wp_get_post_categories($post_ID); 
     restore_current_blog(); 
 
-    $request_url = cah_news_query(array(
+    $posts = cah_news_query(array(
         'dept' => get_option('cah_news_display_dept2'), 
         'categories' => $cats,
         'per_page' => 4, 
         'exclude' => $post_ID, 
     ));
-    // echo $request_url; 
-    $response = wp_remote_get($request_url, array('timeout'=>20)); 
-
-    if (is_wp_error($response)) {
-        echo 'Error showing related posts';
-        echo $response->get_error_message();
-        return; 
-    }
-
-    $posts = json_decode(wp_remote_retrieve_body($response)); 
 
     echo '<h4>Related Posts</h4>';
     echo '<ul class="list-group list-group-flush">';
@@ -208,10 +230,14 @@ function query_news($deptIDs, $args)
         ),
         'posts_per_page' => $per_page,
         'paged' => $paged,
-        's' => get_search_query(), 
     );
+
     if (!empty($cat)) {
         $args['category__in'] = $cat; 
+    }
+
+    if (isset($_GET['search'])) {
+        $args['s'] = esc_attr($_GET['search']);
     }
     
     if (!empty($args['exclude'])) {
@@ -255,8 +281,33 @@ function display_news($news_query, $current_blog) {
    <?
 }
 
+// Display post preview with JSON information from REST API
+function cah_news_display_post($post) {
+    if (!is_object($post)) return;
+    $title = $post->title->rendered;
+    $excerpt = $post->excerpt->rendered;
+    $link = esc_url(add_query_arg(array('postID' => $post->id), get_home_url(null, 'news-post')));
+    $date = date_format(date_create($post->date), 'F d, Y');
+
+    ?>
+        <div class="ucf-news-item p-0">
+            <a href="<?=$link?>" class="p-3">
+                <div class="ucf-news-item-content">
+                    <div class="ucf-news-item-details">
+                        <h5 class="ucf-news-item-title"><?=$title?></h5>
+                        <p class="ucf-news-item-excerpt">
+                            <span class="text-muted"><?=$date?></span>
+                            <?=$excerpt?>
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    <?
+}
+
 function cah_news_post($id) {
-    $post_url = esc_url(add_query_arg(array('postID' => $id), get_home_url($current_blog, 'news-post'))); 
+    $post_url = esc_url(add_query_arg(array('postID' => $id), get_home_url(null, 'news-post')));
     ?>
         <div class="ucf-news-item">
         <a href="<?= $post_url ?>">
@@ -283,10 +334,15 @@ function cah_news_post($id) {
 }
 
 // Display pagination navigation 
-function cah_news_pagination($query) {
-    $max_pages = $query->max_num_pages;
-    $current_page = max(get_query_var('paged'), 1);
+function cah_news_pagination($max_pages) {
 
+    if ($max_pages <= 1) {
+        return;
+    }
+
+    $current_page = max(get_query_var('paged'), 1);
+    $show_prev = $current_page > 1;
+    $show_next = $current_page < $max_pages;
     $page_nums = array();
 
     $width = 3;
@@ -307,19 +363,19 @@ function cah_news_pagination($query) {
                 $page_nums[] = $i;
             }
         }
-
         if ($page_nums[-1] !== $max_pages) {
             $page_nums[] = $max_pages;
         }
-
     }
 
     ?>
     <nav aria-label="News posts">
         <ul class="pagination pagination-lg">
-            <li class="page-item"><? previous_posts_link( '&laquo; Previous page', $max_pages) ?></li>
-
             <?
+            if ($show_prev) {
+                echo sprintf('<li class="page-item"><a class="page-link" href="%s">&laquo; Previous page</a></li>', get_pagenum_link($current_page-1));
+            }
+
             $prev = $page_nums[0];
             foreach($page_nums as $page) {
                 // divider
@@ -331,11 +387,11 @@ function cah_news_pagination($query) {
                 echo sprintf('<li class="page-item %s"><a href="%s" class="page-link">%s</a></li>', $active, $link, $page);
                 $prev = $page;
             }
+
+            if ($show_next) {
+                echo sprintf('<li class="page-item"><a class="page-link" href="%s">Next page &raquo;</a></li>', get_pagenum_link($current_page+1));
+            }
             ?>
-
-
-            <li class="page-item"><? next_posts_link( 'Next page &raquo;', $max_pages) ?></li>
-
         </ul>
     </nav>
     <?

@@ -18,6 +18,10 @@ function cah_news_shortcode($atts) {
         echo '<h2>In the News</h2>'; 
     }
 
+    if ($atts['view'] == 'full') {
+        cah_news_search();
+    }
+
     // Department(s) to display 
     $displayDept = !empty($atts['dept']) ? $atts['dept'] : get_option('cah_news_display_dept2'); 
     if (empty($displayDept)) {
@@ -35,7 +39,7 @@ function cah_news_shortcode($atts) {
     // restore_current_blog();
 
     if ($atts['limit'] == -1) {
-        cah_news_pagination($query);
+        cah_news_pagination($query->max_num_pages);
     }
     if ($atts['view'] == 'preview') {
         $news_page = get_option('cah_news_set_news_page', 'news'); 
