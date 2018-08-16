@@ -61,22 +61,6 @@ function cah_news_set_news_page_field() {
     echo $post; 
 }
 
-// DEPRECIATED
-function cah_news_display_dept_field($args) {
-    $field_title = 'cah_news_display_dept';
-    $value = get_option($field_title); 
-    $depts = get_departments(); 
-    ?>
-    <select name="<?= $field_title ?>"  id="<?= $field_title ?>">
-        <? foreach($depts as $dept) {
-            $selected = $value == $dept->term_id ? 'selected=selected' : '';
-            echo "<option value='" . $dept->name . "' " . $selected . ">" . $dept->term_id . "</option>";
-        }
-        ?>
-    </select>
-    <?
-}
-
 // Table view of departments to select for display 
 function cah_news_display_dept2_field($args) {
     // get_departments_table(); 
@@ -93,7 +77,7 @@ function cah_news_display_dept2_field($args) {
         }
         table#deptTable td, table#deptTable th {
             width: auto !important;
-            white-space: no-wrap; 
+            white-space: nowrap;
             border: 1px solid black; 
         }
     </style>
@@ -159,16 +143,6 @@ function cah_news_set_dept_field() {
     }
     ?>
     </datalist>
-    <?
-}
-
-function cah_news_set_dept_field_old() {
-    ?>
-    <h2>Set Department</h2>
-    <input type="checkbox" name="doSetDept" id="setDept">
-    <label for="setDept">Apply Department taxonomy to this site's <b><? echo count(get_uncategorized_news()); ?></b>  uncategorized news posts:</label>
-    <input type="text" name="setDept" value="<?php echo get_bloginfo('name'); ?>">
-    
     <?
 }
 
