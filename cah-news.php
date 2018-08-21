@@ -10,6 +10,9 @@
 
 define('CAH_NEWS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
+// Included files 
+require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-setup.php';
+
 // Search function
 function cah_news_search() {
     $search_query = isset($_GET['search']) ? esc_attr($_GET['search']) : '';
@@ -87,7 +90,6 @@ function cah_news_get_thumbnail($post) {
     if ($media->embeddable == true) {
         $img_href = $media->href; 
     }
-
 }
 
 // Display links to posts with same categories as current news post
@@ -158,47 +160,6 @@ function cah_news_before() {
 
     add_filter('excerpt_more', 'cah_news_excerpt_more'); 
     add_filter('excerpt_length', 'cah_news_excerpt_length'); 
-}
-
-// Register custom taxonomy to classify department origin
-add_action( 'init', 'create_dept_tax' );
-function create_dept_tax() {
-    $labels = array(
-        'name'                           => 'Departments',
-        'singular_name'                  => 'Department',
-        'search_items'                   => 'Search Departments',
-        'all_items'                      => 'All Departments',
-        'edit_item'                      => 'Edit Department',
-        'update_item'                    => 'Update Department',
-        'add_new_item'                   => 'Add New Department',
-        'new_item_name'                  => 'New Department Name',
-        'menu_name'                      => 'Department',
-        'view_item'                      => 'View Department',
-        'popular_items'                  => 'Popular Department',
-        'separate_items_with_commas'     => 'Separate departments with commas',
-        'add_or_remove_items'            => 'Add or remove departments',
-        'choose_from_most_used'          => 'Choose from the most used departments',
-        'not_found'                      => 'No departments found'
-    );
-
-    register_taxonomy(
-        'dept',
-        'news',
-        array(
-            'label'         => __('Department'),
-            'hierarchical'  => true, // must be true for post_categories_meta_box
-            'labels'        => $labels,
-            'public'        => true, 
-            'show_in_rest'  => true,
-            'show_in_menu'  => false,
-            'description'   => 'Taxonomy to classify department of CAH to which news item belongs.',
-//            'meta_box_cb' => 'post_tags_meta_box',
-            'meta_box_cb'   => 'post_categories_meta_box',
-        )
-    );
-
-    // Associate 'Department' taxonomy with 'News' CPT
-    register_taxonomy_for_object_type('news', 'dept');
 }
 
 function get_displayed_departments() {
