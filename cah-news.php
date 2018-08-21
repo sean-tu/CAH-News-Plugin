@@ -68,7 +68,6 @@ function cah_news_query($params, $advanced=false, $embed=true) {
     $response = wp_remote_get($request_url, array('timeout'=>20));
     if (is_wp_error($response)) {
         echo 'Error showing news ';
-        echo $response->get_error_message();
         return null;
     }
 
@@ -230,7 +229,12 @@ function display_news($news_query, $current_blog) {
             </div>
         </a>
         </div>
-    <?php endwhile; endif; ?>
+    <?php endwhile; 
+    else:
+        echo 'No posts found'; 
+    endif; 
+     
+    ?>
 
     </div>
 
