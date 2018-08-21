@@ -15,13 +15,26 @@ function cah_news_search() {
     $search_query = isset($_GET['search']) ? esc_attr($_GET['search']) : '';
     ?>
     <form role="search" method="get" id="search-form" >
-        <div class="search-wrap">
-            <input type="search" placeholder="Show me news on..." name="search" id="search-input" value="<?= $search_query ?>" />
-            <input class="screen-reader-text" type="submit" id="search-submit" value="Search" />
+        <div class="input-group">
+            <input type="search" placeholder="Show me news on..." name="search" class="form-control" id="search-input" value="<?= $search_query ?>" />
+            <!-- <input class="screen-reader-text" type="submit" id="search-submit" value="Search" /> -->
+            <span class="input-group-btn">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
+            </span>
+            <span class="input-group-addon"><a href="<?= cah_news_get_news_page_link() ?>">Reset</a></span>
         </div>
     </form>
     <hr>
     <?
+}
+
+// Get a link to the main news page on the site
+function cah_news_get_news_page_link() {
+    $page = get_option('cah_news_set_news_page', 'news'); 
+    $url = get_home_url(null, $page); 
+    return $url; 
 }
 
 // Exclude current post from query
@@ -30,24 +43,6 @@ function cah_news_exclude_current_post($query) {
     if (isset($post_ID) && is_numeric($post_ID)) {
         $query->set('post__not_in', array($post_ID)); 
     }
-}
-
-// Show posts related to current news post
-function cah_news_related_posts2($post_ID) {
-    switch_to_blog(1); 
-    $post_categories = wp_get_post_categories($post_ID);
-    if (count($post_categories) > 1) {
-        add_action('pre_get_posts', 'cah_news_exclude_current_post');
-        echo '<h3>Related Posts</h3>'; 
-        $cat_array = '';
-        foreach($post_categories as $c) {
-            $cat_array .= (string)$c . ','; 
-        }
-        $cat_array = substr($cat_array, 0, -1); 
-        $sc_string = sprintf('[cah-news limit=3 per_page=3 cat=%s]', $cat_array); 
-        do_shortcode($sc_string); 
-    }
-    restore_current_blog(); 
 }
 
 // Returns a REST API query URL of news posts
