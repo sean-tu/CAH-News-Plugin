@@ -49,18 +49,47 @@ function cah_news_metaboxes() {
         'cah_news_link_metabox',
         'news',
         'side',
-        'default'
+        'high'
     );
 }
 add_action('add_meta_boxes', 'cah_news_metaboxes'); 
 
+// Get Blog ID associated with a department taxonomy 
+function cah_news_get_blog_id($dept_id) {
+
+    $id = get_term_meta($dept_id, 'blog_id', true); 
+    if (!$id) {
+        $blogs = []; 
+        foreach(get_sites() as $site) {
+            $blog_name = $site__get('blogname');
+            $blog_id = $site->blog_id; 
+            $blogs[$blog_name] = $blog_id; 
+        }
+
+        $dept_name = get_term($dept_id, 'dept'); 
+        if ($blogs[$dept_name]) {
+            return $blogs[$dept_name]; 
+        }
+        return -1; 
+
+    } 
+    else {
+        return $id; 
+    }
+
+}
+
 function cah_news_link_metabox() {
     global $post; 
     $terms = wp_get_post_terms($post->ID, 'dept'); 
-    echo '<div class="container">'; 
+    $links = []; 
     foreach($terms as $term) {
-        echo $term->name; 
+        $blog_id = cah_news_get_blog_id($term->term_id); 
+        $post_url = add_query_arg('postID', $post->ID, get_home_url($blog_id, 'news-post')); 
+        $links[] = sprintf('<a href="%s">%s</a>', $post_url, $term->name); 
     }
+    echo '<div class="container">'; 
+    echo implode(',', $links); 
     echo '</div>'; 
 }
 

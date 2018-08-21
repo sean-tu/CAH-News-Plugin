@@ -88,10 +88,17 @@ function cah_news_display_dept2_field($args) {
                 <th>ID</th>
                 <th>Slug</th>
                 <th>Posts</th>
+                <th>Blog ID</th>
             </tr>
             <?
+           
             foreach(get_departments() as $dept) {
-                $checked = in_array($dept->term_id, $field_value) ? 'checked=checked' : ''; 
+                $checked = in_array($dept->term_id, $field_value) ? 'checked=checked' : '';
+                $dept_blog = get_term_meta($dept->term_id, 'blog_id', true);
+                if (!$dept_blog) {
+                    $dept_blog_td = '<input type="number" value="<?= $dept_blog ?>">'; 
+                }
+
             ?>
                 <tr>
                     <td><input type="checkbox" name="<?=$field_name?>" value="<?=$dept->term_id?>" <?=$checked?> ></td>
@@ -99,6 +106,8 @@ function cah_news_display_dept2_field($args) {
                     <td><? echo $dept->term_id; ?></td>
                     <td><? echo $dept->slug; ?></td>
                     <td><? echo $dept->count; ?></td>
+
+                    <td><?= cah_news_get_blog_id($dept->term_id) ?></td>
                 </tr>
             <?
             }
