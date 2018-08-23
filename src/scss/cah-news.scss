@@ -1,0 +1,16 @@
+img:after { 
+    content: "\f110" " " attr(alt);
+    
+    font-size: 18px;
+    font-family: FontAwesome;
+    color: rgb(100, 100, 100);
+    
+    display: block;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+  }
