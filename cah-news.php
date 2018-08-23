@@ -17,19 +17,18 @@ require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-setup.php';
 function cah_news_search() {
     $search_query = isset($_GET['search']) ? esc_attr($_GET['search']) : '';
     ?>
-    <form role="search" method="get" id="search-form" >
+    <form role="search" method="get" id="search-form" class="mb-3">
         <div class="input-group">
-            <input type="search" placeholder="Show me news on..." name="search" class="form-control" id="search-input" value="<?= $search_query ?>" />
+            <input type="search" placeholder="Show me news on..." name="search" class="form-control" id="search-input" value="<?= $search_query ?>" aria-label="Search for news"/>
             <!-- <input class="screen-reader-text" type="submit" id="search-submit" value="Search" /> -->
             <span class="input-group-btn">
-                <button class="btn btn-primary" type="submit">
+                <button class="btn btn-primary" type="submit" aria-label="Submit search">
                     <i class="fa fa-search"></i>
                 </button>
             </span>
             <span class="input-group-addon"><a href="<?= cah_news_get_news_page_link() ?>">Reset</a></span>
         </div>
     </form>
-    <hr>
     <?
 }
 
@@ -154,9 +153,14 @@ function cah_news_excerpt_more($more) {
 
 // Add filters to modify display of news posts 
 function cah_news_before() {
-    add_filter('next_posts_link_attributes', 'posts_link_attributes');
-    add_filter('previous_posts_link_attributes', 'posts_link_attributes');
+    // Load scripts and styles
+    add_action('wp_enqueue_scripts', 'cah_news_enqueue_assets');
 
+    // Add CSS classes to pagination links
+    // add_filter('next_posts_link_attributes', 'posts_link_attributes');
+    // add_filter('previous_posts_link_attributes', 'posts_link_attributes');
+
+    // Change excerpt display properties 
     add_filter('excerpt_more', 'cah_news_excerpt_more'); 
     add_filter('excerpt_length', 'cah_news_excerpt_length'); 
 }
@@ -206,14 +210,15 @@ function display_news($news_query, $current_blog) {
     cah_news_before(); 
     echo "<div class='ucf-news modern'>";
     if ($news_query->have_posts()) : while ($news_query->have_posts()) : $news_query->the_post(); 
-        $post_url = esc_url(add_query_arg(array('postID' => get_the_ID()), get_home_url($current_blog, 'news-post'))); 
+        $post_ID = get_the_id(); 
+        $post_url = esc_url(add_query_arg(array('postID' => $post_ID), get_home_url($current_blog, 'news-post'))); 
     ?>
         <div class="ucf-news-item p-0">
         <a href="<?= $post_url ?>" class='p-3'>
-            <? if ($img = get_the_post_thumbnail_url()): ?>
-                <div class="ucf-news-thumbnail-image-cah mr-3"
-                     style="background-image:url('<?= $img ?>'">
-                </div>
+            <? 
+            $img = get_the_post_thumbnail_url($post_ID, 'thumbnail'); 
+            if ($img): ?>
+                <img data-src="<?= $img?>" width='150' height='150' class='mr-3' aria-label="Featured image">
             <? endif; ?>
             <div class="ucf-news-item-content">
                 <div class="ucf-news-item-details">
@@ -323,7 +328,7 @@ function cah_news_pagination($max_pages) {
                 $page_nums[] = $i;
             }
         }
-        if ($page_nums[-1] !== $max_pages) {
+        if (end($page_nums) !== $max_pages) {
             $page_nums[] = $max_pages;
         }
     }
@@ -340,7 +345,7 @@ function cah_news_pagination($max_pages) {
             foreach($page_nums as $page) {
                 // divider
                 if ($page - $prev > 1) {
-                    echo sprintf('<li class="page-item disabled"><a tabindex="-1" class="page-link disabled">...</a></li>');
+                    echo sprintf('<li class="page-item disabled"><a class="page-link disabled">...</a></li>');
                 }
                 $link = get_pagenum_link($page);
                 $active = $page == $current_page ? 'active' : '';
