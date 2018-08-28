@@ -480,10 +480,12 @@ function bulk_apply_dept_tax($deptName) {
 
 // Included files 
 require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-shortcode.php';
+require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-toolbar.php';
 
 // Included admin files
 if (is_admin()) {
-    require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-options.php';
+    require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-options.php';
+    require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-admin-list.php';
 }
 
 
