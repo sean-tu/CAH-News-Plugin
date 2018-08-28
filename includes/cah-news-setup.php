@@ -2,11 +2,10 @@
 
 // Load scripts and styles
 function cah_news_enqueue_assets() {   
-    if (is_page(['news', 'news-beta', 'news-post'])) {
-        wp_enqueue_script( 'cah_news_lazy_load', plugins_url('src/js/lazy_load.js', dirname(__FILE__)), array(), '1.0' , true );
-        wp_enqueue_style( 'cah_news_stylesheet', plugins_url('static/cah-news.css', dirname(__FILE__)), array(), '1.0' , 'all' );
-    }
+    wp_enqueue_script( 'cah_news_lazy_load', plugins_url('src/js/lazy_load.js', dirname(__FILE__)), array(), '1.0' , true );
+    wp_enqueue_style( 'cah_news_stylesheet', plugins_url('static/cah-news.css', dirname(__FILE__)), array(), '1.0' , 'all' );
 }
+add_action('wp_enqueue_scripts', 'cah_news_enqueue_assets');
 
 // Register custom taxonomy to classify department origin
 add_action( 'init', 'create_dept_tax' );
