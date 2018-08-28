@@ -1,6 +1,32 @@
 <?
 
 add_shortcode('cah-news', 'cah_news_shortcode');
+
+function cah_news_shortcode_new($atts) {    
+    $atts = shortcode_atts(array(
+        'dept' => array(),
+        'limit' => -1,
+        'per_page' => 5,
+        'view' => 'full',
+        'cat'  => array(),
+        'exclude' => array(), 
+    ), $atts);
+
+    cah_news_before(); 
+    
+    if ($atts['view'] == 'preview') {
+        echo '<h2>In the News</h2>'; 
+        cah_news_get_news(3, false);
+    }
+
+    if ($atts['view'] == 'full') {
+        cah_news_search();
+        cah_news_get_news(); 
+    }
+
+  
+}
+
 function cah_news_shortcode($atts) {    
     $atts = shortcode_atts(array(
         'dept' => array(),

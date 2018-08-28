@@ -13,6 +13,45 @@ define('CAH_NEWS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 // Included files 
 require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-setup.php';
 
+
+function cah_news_get_news($per_page=4, $paged=true) {
+
+    $query = array(
+        'dept' => get_option('cah_news_display_dept2'),
+        'per_page' => $per_page,
+    );
+
+    // Department select
+    if (isset($_GET['dept'])) {
+        $query['dept'] = $_GET['dept']; 
+    }
+
+    // Search query
+    if (isset($_GET['search'])) {
+        $query['search'] = esc_attr($_GET['search']);
+    }
+
+    $query['page'] = max(get_query_var('paged'), 1);
+
+    $result = cah_news_query($query, true);
+    $posts = $result['posts'];
+    if ($posts === null) {
+        return;
+    }
+    $max_pages = $result['max_pages'];
+
+    echo '<div class="ucf-news modern">';
+    foreach ($posts as $post) {
+        cah_news_display_post($post);
+    }
+    echo '</div>';
+
+    if ($paged) {
+        cah_news_pagination($max_pages);
+    }
+
+}
+
 // Search function
 function cah_news_search() {
     $search_query = isset($_GET['search']) ? esc_attr($_GET['search']) : '';
@@ -22,7 +61,7 @@ function cah_news_search() {
             <input type="search" placeholder="Show me news on..." name="search" class="form-control" id="search-input" value="<?= $search_query ?>" aria-label="Search for news"/>
             <!-- <input class="screen-reader-text" type="submit" id="search-submit" value="Search" /> -->
             <span class="input-group-btn">
-                <button class="btn btn-primary" type="submit" aria-label="Submit search">
+                <button class="btn btn-primary" type="submit" role="button" aria-label="Submit search">
                     <i class="fa fa-search"></i>
                 </button>
             </span>
@@ -51,6 +90,7 @@ function cah_news_exclude_current_post($query) {
 function cah_news_query($params, $advanced=false, $embed=true) {
     $base_url = 'http://wordpress.cah.ucf.edu/wp-json/wp/v2/news?'; 
     $query = ''; 
+
     foreach($params as $key => $value) {
         if (is_array($value)) {
             $value = implode(',', $value); 
@@ -62,6 +102,7 @@ function cah_news_query($params, $advanced=false, $embed=true) {
     if ($embed) {
         $query .= '_embed';
     }
+
 
     $request_url = $base_url . $query;
     $response = wp_remote_get($request_url, array('timeout'=>20));
@@ -154,7 +195,7 @@ function cah_news_excerpt_more($more) {
 // Add filters to modify display of news posts 
 function cah_news_before() {
     // Load scripts and styles
-    add_action('wp_enqueue_scripts', 'cah_news_enqueue_assets');
+    // add_action('wp_enqueue_scripts', 'cah_news_enqueue_assets');
 
     // Add CSS classes to pagination links
     // add_filter('next_posts_link_attributes', 'posts_link_attributes');
@@ -218,7 +259,7 @@ function display_news($news_query, $current_blog) {
             <? 
             $img = get_the_post_thumbnail_url($post_ID, 'thumbnail'); 
             if ($img): ?>
-                <img data-src="<?= $img?>" width='150' height='150' class='mr-3' aria-label="Featured image">
+                <img data-src="<?= $img?>" width='150' height='150' class='mr-3' aria-label`="Featured image">
             <? endif; ?>
             <div class="ucf-news-item-content">
                 <div class="ucf-news-item-details">
@@ -249,14 +290,26 @@ function display_news($news_query, $current_blog) {
 // Display post preview with JSON information from REST API
 function cah_news_display_post($post) {
     if (!is_object($post)) return;
+    $id = $post->id; 
     $title = $post->title->rendered;
     $excerpt = $post->excerpt->rendered;
     $link = esc_url(add_query_arg(array('postID' => $post->id), get_home_url(null, 'news-post')));
     $date = date_format(date_create($post->date), 'F d, Y');
+    $thumbnail = ''; 
+    // // $thumbnail = $post.embedded.{'wp:featuredmedia'}.media_details.sizes.thumbnail.source_url; 
+    if (isset($post->_embedded->{'wp:featuredmedia'}[0]->media_details->sizes->thumbnail->source_url))
+    {
+        $thumbnail = $post->_embedded->{'wp:featuredmedia'}[0]->media_details->sizes->thumbnail->source_url;
+    }
 
     ?>
         <div class="ucf-news-item p-0">
             <a href="<?=$link?>" class="p-3">
+            <?
+            if ($thumbnail) {
+                echo '<img data-src="' . $thumbnail . '" width="150" height="150" class="mr-3" aria-label="Featured image">';
+            }
+            ?>
                 <div class="ucf-news-item-content">
                     <div class="ucf-news-item-details">
                         <h5 class="ucf-news-item-title"><?=$title?></h5>
