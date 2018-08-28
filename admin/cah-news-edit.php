@@ -11,17 +11,18 @@ function cah_news_link_metabox() {
     echo '</div>';
 }
 
-// Get direct links to child sites where post appears
-function cah_news_get_post_links($id) {
-    $terms = wp_get_post_terms($id, 'dept');
-    $links = [];
-    foreach($terms as $term) {
-        $blog_id = cah_news_get_blog_id($term->term_id);
-        $post_url = add_query_arg('postID', $id, get_home_url($blog_id, 'news-post'));
-        $links[] = sprintf('<a href="%s">%s</a>', $post_url, $term->name);
-    }
-    return $links;
+// Add metabox to show news post link
+function cah_news_metaboxes() {
+    add_meta_box(
+        'cah_news_link',
+        'News Post Link',
+        'cah_news_link_metabox',
+        'news',
+        'side',
+        'high'
+    );
 }
+
 
 ?>
 

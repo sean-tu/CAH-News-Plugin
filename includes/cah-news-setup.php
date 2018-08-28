@@ -48,18 +48,6 @@ function create_dept_tax() {
     register_taxonomy_for_object_type('news', 'dept');
 }
 
-// Add metabox to show news post link
-function cah_news_metaboxes() {
-    add_meta_box(
-        'cah_news_link',
-        'News Post Link',
-        'cah_news_link_metabox',
-        'news',
-        'side',
-        'high'
-    );
-}
-add_action('add_meta_boxes', 'cah_news_metaboxes'); 
 
 // Get Blog ID associated with a department taxonomy 
 function cah_news_get_blog_id($dept_id) {
@@ -68,7 +56,7 @@ function cah_news_get_blog_id($dept_id) {
     if (!$id) {
         $blogs = []; 
         foreach(get_sites() as $site) {
-            $blog_name = $site__get('blogname');
+            $blog_name = $site.__get('blogname');
             $blog_id = $site->blog_id; 
             $blogs[$blog_name] = $blog_id; 
         }
@@ -84,20 +72,6 @@ function cah_news_get_blog_id($dept_id) {
         return $id; 
     }
 
-}
-
-function cah_news_link_metabox() {
-    global $post; 
-    $terms = wp_get_post_terms($post->ID, 'dept'); 
-    $links = []; 
-    foreach($terms as $term) {
-        $blog_id = cah_news_get_blog_id($term->term_id); 
-        $post_url = add_query_arg('postID', $post->ID, get_home_url($blog_id, 'news-post')); 
-        $links[] = sprintf('<a href="%s">%s</a>', $post_url, $term->name); 
-    }
-    echo '<div class="container">'; 
-    echo implode(',', $links); 
-    echo '</div>'; 
 }
 
 ?>

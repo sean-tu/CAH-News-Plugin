@@ -27,7 +27,29 @@ function cah_news_shortcode_new($atts) {
   
 }
 
-function cah_news_shortcode($atts) {    
+// Display news
+function cah_news_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'dept' => array(),
+        'limit' => -1,
+        'per_page' => 5,
+        'view' => 'full',
+        'cat'  => array(),
+        'exclude' => array(),
+    ), $atts);
+
+    if ($atts['view'] == 'preview') {
+        cah_news_get_news(3, false);
+        $news_page = get_option('cah_news_set_news_page', 'news');
+        echo sprintf('<a class="btn btn-primary btn-sm" href="%s">More News</a><br>', home_url($news_page));
+    }
+    else {
+        cah_news_get_news($atts['per_page'], true);
+    }
+}
+
+// DEPRECIATED
+function cah_news_shortcode_old($atts) {
     $atts = shortcode_atts(array(
         'dept' => array(),
         'limit' => -1,
@@ -41,7 +63,7 @@ function cah_news_shortcode($atts) {
         $atts['limit'] = 3;
         $atts['per_page'] = 3; 
         
-        echo '<h2>In the News</h2>'; 
+        echo '<h2>In the News</h2>';
     }
 
     if ($atts['view'] == 'full') {

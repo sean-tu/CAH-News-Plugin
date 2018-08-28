@@ -27,6 +27,4 @@ function cah_news_toolbar_link($wp_admin_bar) {
 
 }
 
-
-
 ?>

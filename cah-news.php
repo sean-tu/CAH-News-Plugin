@@ -23,7 +23,7 @@ function cah_news_get_news($per_page=4, $paged=true) {
 
     // Department select
     if (isset($_GET['dept'])) {
-        $query['dept'] = $_GET['dept']; 
+        $query['dept'] = esc_attr($_GET['dept']);
     }
 
     // Search query
@@ -131,57 +131,6 @@ function cah_news_get_thumbnail($post) {
     }
 }
 
-// Display links to posts with same categories as current news post
-function cah_news_related_posts($post_ID) {
-    switch_to_blog(1);
-    $cats = wp_get_post_categories($post_ID); 
-    restore_current_blog(); 
-
-    $posts = cah_news_query(array(
-        'dept' => get_option('cah_news_display_dept2'), 
-        'categories' => $cats,
-        'per_page' => 4, 
-        'exclude' => $post_ID, 
-    ));
-
-    echo '<h4>Related Posts</h4>';
-    echo '<ul class="list-group list-group-flush">';
-    foreach($posts as $post) {
-        $post_url = esc_url(add_query_arg(array('postID' => $post->id), get_home_url(null, 'news-post'))); 
-        echo sprintf('<a href="%s"><li class="list-group-item list-group-item-action">%s</li></a>', $post_url, $post->title->rendered);
-    }
-    echo '</ul>'; 
-}
-
-// Display post's categories and tags
-function cah_news_categories_tags($post_ID) {   
-    switch_to_blog(1); 
-    $post_categories = wp_get_post_categories($post_ID); 
-    $categories_count = count($post_categories);
-    if ($categories_count > 0) {
-        echo "<span class='text-muted'>Posted in </span>";
-        foreach($post_categories as $c){
-            $categories_count--; 
-            if ($cat = get_category($c)) {
-                echo $cat->name;
-                if ($categories_count > 0) echo ', ';
-            }
-        }
-        echo '<br>'; 
-    }
-    echo get_the_tag_list(
-            '<span class="text-muted">Tags:</span> ',
-            ', ',
-            '<br>');    
-    echo '<br>';
-    restore_current_blog(); 
-}
-
-// Add class to prev/next page links
-function posts_link_attributes() {
-    return 'class="page-link"';
-}
-
 // Filter excerpt length
 function cah_news_excerpt_length($length) {
     return 20; 
@@ -196,10 +145,6 @@ function cah_news_excerpt_more($more) {
 function cah_news_before() {
     // Load scripts and styles
     // add_action('wp_enqueue_scripts', 'cah_news_enqueue_assets');
-
-    // Add CSS classes to pagination links
-    // add_filter('next_posts_link_attributes', 'posts_link_attributes');
-    // add_filter('previous_posts_link_attributes', 'posts_link_attributes');
 
     // Change excerpt display properties 
     add_filter('excerpt_more', 'cah_news_excerpt_more'); 
@@ -441,51 +386,34 @@ function get_uncategorized_news() {
     return get_posts($args);
 }
 
-// Apply department taxonomy to currently uncategorized news posts
-function bulk_apply_dept_tax($deptName) {
-    global $msg;
-    $appliedCount = 0;
-    $news_posts = get_uncategorized_news();
-
-    $deptSlug = sanitize_title($deptName);
-    $msg .= 'Using slug ' . $deptSlug . ".<br>";
-    $term = get_term_by('slug', $deptSlug, 'dept');
-    if ($term == false) {
-        $new_term = wp_insert_term($deptName, 'dept', array('slug' => $deptSlug));
-        if (is_wp_error($new_term)) {
-            $msg .= "Could not create taxonomy term for new department.<br>";
-            return 0;
-        } else {
-            $msg .= "Created dept " . $deptName . " (" . $deptSlug . ")<br>";
-            $deptID = $new_term['term_id'];
+// Get direct links to child sites where post appears
+function cah_news_get_post_links($id, $exclude=[]) {
+    $terms = wp_get_post_terms($id, 'dept');
+    $links = [];
+    foreach($terms as $term) {
+        $dept_id = $term->term_id;
+        if (!in_array($dept_id, $exclude)) {
+            $blog_id = cah_news_get_blog_id($dept_id);
+            $post_url = add_query_arg('postID', $id, get_home_url($blog_id, 'news-post'));
+            $links[] = sprintf('<a href="%s">%s</a>', $post_url, $term->name);
         }
     }
-    else {
-        $deptID = $term->term_id;
-    }
-
-    foreach ($news_posts as $post) {
-        $set_ret = wp_set_object_terms($post->ID, $deptID, 'dept', true);
-
-        if ( is_wp_error($set_ret) ) {
-            $msg .= 'Error applying taxonomy ' . $deptID . '. ';
-        } else {
-            // Success! The post's categories were set.
-            $appliedCount++;
-        }
-    }
-
-    return $appliedCount;
+    return $links;
 }
+
+
 
 // Included files 
 require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-shortcode.php';
 require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-toolbar.php';
+require_once CAH_NEWS_PLUGIN_PATH . 'includes/cah-news-meta.php';
 
 // Included admin files
 if (is_admin()) {
+    require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-edit-taxonomy.php';
     require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-options.php';
     require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-admin-list.php';
+    require_once CAH_NEWS_PLUGIN_PATH . 'admin/cah-news-edit.php';
 }
 
 
